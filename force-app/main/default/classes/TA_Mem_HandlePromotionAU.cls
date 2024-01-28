@@ -9,7 +9,6 @@ public with sharing class TA_Mem_HandlePromotionAU implements TriggerAction.Afte
     private static final String ADJUSTMENT_DESCRIPTION = 'Membership Promotion Credits';
 
     private static Set<String> eligibleFormerStatuses = new Set<String>{'Draft', 'Pending Active'};
-    private static Map<Id, Assigned_Membership_Promotion__c> mapCachedPromos;
     private static Map<Id, TREX1__Membership_Type__c> mapCachedTypesWithPromos;
     private Map<Id, TREX1__Membership__c> oldMap;
 
