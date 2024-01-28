@@ -42,4 +42,9 @@ public with sharing class TRecManualAdjustmentWrapper {
      *******************************************/
     public String type {get; set;}
 
+    /*******************************************
+     * Source membership id
+     *******************************************/
+    public String sourceMembershipId {get; set;}
+
 }

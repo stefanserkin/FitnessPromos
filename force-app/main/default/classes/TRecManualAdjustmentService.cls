@@ -86,32 +86,6 @@ public with sharing class TRecManualAdjustmentService {
         }
         insert lstJes;
 
-        /*
-        // Link debit jes to expiring credits
-        List<TREX1__Payment_Link__c> lstPaymentLinks = new List<TREX1__Payment_Link__c>();
-        // Filter list to only debits
-        List<TREX1__Journal_Entry__c> lstArDebits = new List<TREX1__Journal_Entry__c>();
-        for (TREX1__Journal_Entry__c je : lstJes) {
-            if (je.TREX1__GL_Code__c == arGlCode) {
-                lstArDebits.add(je);
-            }
-        }
-        
-        for (TREX1__Journal_Entry__c debitJe : lstArDebits) {
-            // Retrieve list of corresponding credits to expire from the wrapper id stored in the legacy id field
-            List<TREX1__Journal_Entry__c> lstCreditJes = mapWrappers.get(debitJe.TREX1__Legacy_Id__c).lstJEsToExpire;
-            // Link the unapplied credit amount for each credit je to the debit je
-            for (TREX1__Journal_Entry__c creditJe : lstCreditJes) {
-                TREX1__Payment_Link__c pLink = new TREX1__Payment_Link__c();
-                pLink.TREX1__AR_Debit__c  = debitJe.Id;
-                pLink.TREX1__AR_Credit__c = creditJe.Id;
-                pLink.TREX1__Amount__c    = creditJe.TREX1__Unapplied_Credit_Amount__c;
-                lstPaymentLinks.add(pLink);
-            }
-        }
-        insert lstPaymentLinks;
-        */
-
         // Set the transaction status to close
         // A Rec trigger will update the tli statuses, generate receipt pdfs, and recalculate account rollups
         for (TREX1__Transaction__c t : lstTransactions) {
@@ -258,8 +232,11 @@ public with sharing class TRecManualAdjustmentService {
             TREX1__Available_Billing_Payment_Credit__c = false,                          // Credit Available For Billing Payment
             TREX1__Total_Reversed__c = 0.00,                                             // Total Reversed or Refunded
             TREX1__Has_Been_Summarized__c = false,                                       // Has Been Summarized
-            TREX1__Legacy_Id__c = ae.TREX1__Legacy_Id__c,                                // Wrapper id
-            Credit_Expiration_Batch__c = true                                            // Credit Expiration Batch
+            TREX1__Legacy_Id__c = wrap.id,                                               // Wrapper id
+            Manual_Adjustment_ID__c = wrap.id,                                           // Manual Adjustment id
+            Promo_Credits_Source_Membership__c = wrap.type == TYPE_CREDIT && wrap.sourceMembershipId != null 
+                ? wrap.sourceMembershipId 
+                : null                                                                   // Source membership for issued credits
         );
         lstJEs.add(creditJe);
 
