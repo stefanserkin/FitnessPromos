@@ -33,9 +33,7 @@ public with sharing class TA_Mem_HandlePromotionAU implements TriggerAction.Afte
         // Create wrappers for each valid membership promo and membership
         List<TRecManualAdjustmentWrapper> lstWrappers = new List<TRecManualAdjustmentWrapper>();
         for (TREX1__Membership__c mem : lstActivatedMems) {
-            System.debug('::::: evaluating mem --> ' + mem.Id);
             if (mapTypesWithPromos.containsKey(mem.TREX1__memb_Type__c)) {
-                System.debug('::::: found promo');
                 TREX1__Membership_Type__c mTypeWithPromos = mapTypesWithPromos.get(mem.TREX1__memb_Type__c);
                 for (Assigned_Membership_Promotion__c amp : mTypeWithPromos.Assigned_Membership_Promotions__r) {
                     if (amp.Membership_Promotion__r.Type__c == PROMO_TYPE_ISSUE_CREDITS) {
@@ -47,7 +45,6 @@ public with sharing class TA_Mem_HandlePromotionAU implements TriggerAction.Afte
 
         // Call manual adjustment service to create credit adjustments for wrappers
         if (!lstWrappers.isEmpty()) {
-            System.debug('::::: has wrappers');
             TRecManualAdjustmentService service = new TRecManualAdjustmentService(lstWrappers);
             service.description = ADJUSTMENT_DESCRIPTION;
             service.createAdjustments();
