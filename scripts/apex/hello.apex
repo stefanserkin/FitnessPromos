@@ -5,5 +5,17 @@
 // You can also execute the entire file by running the command:
 //     SFDX: Execute Anonymous Apex with Editor Contents
 
-TRecManualAdjustmentWrapper wrap = new TRecManualAdjustmentWrapper();
-System.debug('wrapper id --> ' + wrap.id);
+
+TRecManualAdjustmentWrapper wrapper = new TRecManualAdjustmentWrapper();
+wrapper.accountId = contact.AccountId;
+wrapper.contactId = contact.Id;
+wrapper.amount    = 29.00;
+wrapper.glCode    = membershipTypeGlCode;
+wrapper.type      = 'Credit';
+
+TRecManualAdjustmentService service = new TRecManualAdjustmentService(
+    new List<TRecManualAdjustmentWrapper>{ wrapper }
+);
+service.createAdjustments();
+
+

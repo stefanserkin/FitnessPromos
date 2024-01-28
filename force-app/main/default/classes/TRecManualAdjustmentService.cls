@@ -4,13 +4,14 @@
  ****************************************************************************/
 public with sharing class TRecManualAdjustmentService {
 
-    private static final String DEFAULT_DESCRIPTION  = 'Manual Adjustment';
+    private static final String DEFAULT_DESCRIPTION     = 'Manual Adjustment';
     private static final String TYPE_MANUAL_ADJUSTMENT  = 'Manual Adjustment';
     private static final String TRANSACTION_PARENT_FLOW = 'Manual Adjustment Service';
     private static final String STATUS_DRAFT            = 'Draft';
     private static final String STATUS_FIRMED           = 'Firmed';
     private static final String GBG_NAME                = 'Asphalt Green';
     private static final String DATETIME_FORMAT         = 'yyyy-MM-dd\'T\'HH:mm:ss:SSS';
+    private static final String TYPE_CREDIT             = 'Credit';
 
     private static Id gbgId;
     private static String arGlCode;
@@ -38,6 +39,7 @@ public with sharing class TRecManualAdjustmentService {
      *  Set default description and create a map of wrapper ids to passed wrappers
      *******************************************/
     public TRecManualAdjustmentService(List<TRecManualAdjustmentWrapper> lstWrappers) {
+        this.mapWrappers = new Map<String, TRecManualAdjustmentWrapper>();
         for (TRecManualAdjustmentWrapper wrap : lstWrappers) {
             this.mapWrappers.put(wrap.id, wrap);
         }
@@ -45,7 +47,7 @@ public with sharing class TRecManualAdjustmentService {
     }
 
     /*******************************************
-     * Create adjustments for wrappers passed to constructor
+     * @description Create adjustments for wrappers passed to constructor
      *******************************************/
     public void createAdjustments() {
         // Create one transaction for each wrapper
@@ -84,6 +86,7 @@ public with sharing class TRecManualAdjustmentService {
         }
         insert lstJes;
 
+        /*
         // Link debit jes to expiring credits
         List<TREX1__Payment_Link__c> lstPaymentLinks = new List<TREX1__Payment_Link__c>();
         // Filter list to only debits
@@ -93,7 +96,7 @@ public with sharing class TRecManualAdjustmentService {
                 lstArDebits.add(je);
             }
         }
-        /*
+        
         for (TREX1__Journal_Entry__c debitJe : lstArDebits) {
             // Retrieve list of corresponding credits to expire from the wrapper id stored in the legacy id field
             List<TREX1__Journal_Entry__c> lstCreditJes = mapWrappers.get(debitJe.TREX1__Legacy_Id__c).lstJEsToExpire;
@@ -149,6 +152,10 @@ public with sharing class TRecManualAdjustmentService {
         TREX1__Transaction__c trans, 
         Decimal amount
     ) {
+        TRecManualAdjustmentWrapper wrap = mapWrappers.get(trans.TREX1__Legacy_Id__c);
+        if (wrap.type == TYPE_CREDIT) {
+            amount = (amount * -1);
+        }
         return new TREX1__Transaction_Line_Item__c(
             RecordTypeId = tliRecTypeId,                                // Record Type (manual adjustment)
             TREX1__Account__c = trans.TREX1__Account__c,                // Account
@@ -156,7 +163,7 @@ public with sharing class TRecManualAdjustmentService {
             TREX1__Contact__c = trans.TREX1__Contact__c,                // Contact
             TREX1__Transaction__c = trans.Id,                           // Transaction
             TREX1__Transaction_Contact__c = trans.TREX1__Contact__c,    // Transaction Contact
-            TREX1__Description__c = description,             // Description
+            TREX1__Description__c = description,                        // Description
             TREX1__Status__c = STATUS_DRAFT,                            // Status
             TREX1__Type__c = 'Item Event',                              // Type
             TREX1__Event_Type__c = TYPE_MANUAL_ADJUSTMENT,              // Event Type
@@ -210,6 +217,7 @@ public with sharing class TRecManualAdjustmentService {
         TREX1__Accounting_Event__c ae
     ) {
         List<TREX1__Journal_Entry__c> lstJEs = new List<TREX1__Journal_Entry__c>();
+        TRecManualAdjustmentWrapper wrap = mapWrappers.get(ae.TREX1__Legacy_Id__c);
 
         TREX1__Journal_Entry__c debitJe = new TREX1__Journal_Entry__c(
             TREX1__Effective_Date_Time__c = Datetime.now(),                              // Effective Date Time
@@ -217,9 +225,9 @@ public with sharing class TRecManualAdjustmentService {
             TREX1__Contact__c = ae.TREX1__Contact__c,                                    // Contact
             TREX1__Type__c = TYPE_MANUAL_ADJUSTMENT,                                     // Type
             TREX1__Accounting_Event__c = ae.Id,                                          // Accounting Event
-            TREX1__GL_Code__c = arGlCode,                                                // GL Code
-            TREX1__Annotation__c = description,                               // Annotation
-            TREX1__Debit__c = ae.TREX1__Total__c,                                        // Debit
+            TREX1__GL_Code__c = wrap.type == TYPE_CREDIT ? wrap.glCode : getArGlCode(),  // GL Code
+            TREX1__Annotation__c = description,                                          // Annotation
+            TREX1__Debit__c = wrap.amount,                                                // Debit
             TREX1__Credit__c = 0.00,                                                     // Credit
             TREX1__Is_Tax__c = false,                                                    // Is Tax
             TREX1__Allow_Unapply_Cred_In_Comm_Tx__c = false,                             // Allow Credit Amount usage in Community
@@ -239,10 +247,10 @@ public with sharing class TRecManualAdjustmentService {
             TREX1__Contact__c = ae.TREX1__Contact__c,                                    // Contact
             TREX1__Type__c = TYPE_MANUAL_ADJUSTMENT,                                     // Type
             TREX1__Accounting_Event__c = ae.Id,                                          // Accounting Event
-            TREX1__GL_Code__c = mapWrappers.get(ae.TREX1__Legacy_Id__c).glCode,          // GL Code
-            TREX1__Annotation__c = description,                               // Annotation
+            TREX1__GL_Code__c = wrap.type == TYPE_CREDIT ? getArGlCode() : wrap.glCode,  // GL Code
+            TREX1__Annotation__c = description,                                          // Annotation
             TREX1__Debit__c = 0.00,                                                      // Debit
-            TREX1__Credit__c = ae.TREX1__Total__c,                                       // Credit
+            TREX1__Credit__c = wrap.amount,                                              // Credit
             TREX1__Is_Tax__c = false,                                                    // Is Tax
             TREX1__Allow_Unapply_Cred_In_Comm_Tx__c = false,                             // Allow Credit Amount usage in Community
             TREX1__Transaction_Line_Item__c = ae.TREX1__Transaction_Line_Item__c,        // Transaction Line Item
