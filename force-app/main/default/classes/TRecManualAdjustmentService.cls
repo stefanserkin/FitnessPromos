@@ -211,7 +211,9 @@ public with sharing class TRecManualAdjustmentService {
             TREX1__Total_Reversed__c = 0.00,                                             // Total Reversed or Refunded
             TREX1__Has_Been_Summarized__c = false,                                       // Has Been Summarized
             TREX1__Legacy_Id__c = ae.TREX1__Legacy_Id__c,                                // Wrapper id
-            Credit_Expiration_Batch__c = true                                            // Credit Expiration Batch
+            Membership_Promotion__c = wrap.membershipPromotionId != null                 // Membership promotion id
+                ? wrap.membershipPromotionId 
+                : null
         );
         lstJEs.add(debitJe);
 
@@ -234,6 +236,9 @@ public with sharing class TRecManualAdjustmentService {
             TREX1__Has_Been_Summarized__c = false,                                       // Has Been Summarized
             TREX1__Legacy_Id__c = wrap.id,                                               // Wrapper id
             Manual_Adjustment_ID__c = wrap.id,                                           // Manual Adjustment id
+            Membership_Promotion__c = wrap.membershipPromotionId != null                 // Membership promotion id
+                ? wrap.membershipPromotionId 
+                : null,
             Promo_Credits_Source_Membership__c = wrap.type == TYPE_CREDIT && wrap.sourceMembershipId != null 
                 ? wrap.sourceMembershipId 
                 : null                                                                   // Source membership for issued credits
