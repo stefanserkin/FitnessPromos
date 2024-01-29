@@ -128,4 +128,41 @@ private class TA_Mem_HandlePromotionAU_Test {
         );
     }
 
+    @IsTest
+    static void testActivateMembershipWithNoGlAccount() {
+        // Clear membership promo gl account
+        Membership_Promotion__c promo = [SELECT Id, GL_Account__c FROM Membership_Promotion__c LIMIT 1];
+        promo.GL_Account__c = null;
+        update promo;
+
+        // Clear membership type gl account
+        TREX1__Membership_Type__c mType = [SELECT Id, TREX1__Category__c, Revenue_GL_Account__c FROM TREX1__Membership_Type__c LIMIT 1];
+        mType.Revenue_GL_Account__c = null;
+        update mType;
+
+        Contact ct = [SELECT Id, AccountId FROM Contact LIMIT 1];
+
+        // Create draft membership
+        TREX1__Membership__c mem = TestDataFactory.createDraftStandardMembership(ct, mType);
+        insert mem;
+
+        Test.startTest();
+        mem.TREX1__Status__c = 'Active';
+        update mem;
+        Test.stopTest();
+
+        Membership_Promotion__c refreshedPromo = [
+            SELECT Id, GL_Account__r.TREX1__GL_Account_Number__c, 
+                   (SELECT Id, TREX1__GL_Code__c
+                      FROM TRec_Journal_Entries__r)
+              FROM Membership_Promotion__c 
+             LIMIT 1
+        ];
+
+        Assert.isTrue(
+            refreshedPromo.TRec_Journal_Entries__r.isEmpty(),
+            'Journal entries should not have been created without a gl code'
+        );
+    }
+
 }
