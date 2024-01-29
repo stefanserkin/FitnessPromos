@@ -63,29 +63,6 @@ public with sharing class TA_Mem_HandlePromotionAU implements TriggerAction.Afte
             }
         }
 
-        /*
-        List<TRecManualAdjustmentWrapper> lstWrappers = new List<TRecManualAdjustmentWrapper>();
-        for (TREX1__Membership__c mem : lstActivatedMems) {
-            if (mapTypesWithPromos.containsKey(mem.TREX1__memb_Type__c)) {
-                TREX1__Membership_Type__c mTypeWithPromos = mapTypesWithPromos.get(mem.TREX1__memb_Type__c);
-                for (Assigned_Membership_Promotion__c amp : mTypeWithPromos.Assigned_Membership_Promotions__r) {
-                    if (amp.Membership_Promotion__r.Type__c == PROMO_TYPE_ISSUE_CREDITS) {
-                        // The gl code to offset, set from GL Code on promo
-                        // If blank, use the revenue gl account from the membership type
-                        String glCode = amp.Membership_Promotion__r.GL_Account__c != null
-                            ? amp.Membership_Promotion__r.GL_Account__r.TREX1__GL_Account_Number__c
-                            : mTypeWithPromos.Revenue_GL_Account__r.TREX1__GL_Account_Number__c;
-                        lstWrappers.add( createAdjustmentWrapper(
-                            mem, 
-                            amp, 
-                            glCode
-                        ));
-                    }
-                }
-            }
-        }
-        */
-
         // Call manual adjustment service to create credit adjustments for wrappers
         if (!lstWrappers.isEmpty()) {
             TRecManualAdjustmentService service = new TRecManualAdjustmentService(lstWrappers);
