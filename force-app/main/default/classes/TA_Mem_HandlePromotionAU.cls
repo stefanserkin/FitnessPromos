@@ -9,18 +9,24 @@ public with sharing class TA_Mem_HandlePromotionAU implements TriggerAction.Afte
     @TestVisible
     private static final String ADJUSTMENT_DESCRIPTION = 'Membership Promotion Credits';
 
-    private static Set<String> eligibleFormerStatuses = new Set<String>{'Draft', 'Pending Active'};
+    private static Set<String> eligibleFormerStatuses = new Set<String>{
+        'Draft', 
+        'Pending Active'
+    };
+
     private static Map<Id, TREX1__Membership_Type__c> mapCachedTypesWithPromos;
-    private Map<Id, TREX1__Membership__c> oldMap;
+    private static Map<Id, TREX1__Membership__c> newMap;
+    private static Map<Id, TREX1__Membership__c> oldMap;
 
     public void afterUpdate(
         List<TREX1__Membership__c> newList, 
         List<TREX1__Membership__c> oldList
     ) {
         oldMap = new Map<Id, TREX1__Membership__c>(oldList);
+        newMap = TA_Mem_QueriesAU.getInstance().mapMemberships;
 
         // Filter to memberships being activated
-        List<TREX1__Membership__c> lstActivatedMems = filterMemberships(newList);
+        List<TREX1__Membership__c> lstActivatedMems = filterMemberships(newMap.values());
         if (lstActivatedMems.isEmpty()) return;
 
         // Get active promotions for membership types
@@ -30,7 +36,34 @@ public with sharing class TA_Mem_HandlePromotionAU implements TriggerAction.Afte
         }
         Map<Id, TREX1__Membership_Type__c> mapTypesWithPromos = getActivePromotions(setMemTypeIds);
 
+        // Filter to activated memberships with active promos
+        List<TREX1__Membership__c> lstMemsWithPromos = new List<TREX1__Membership__c>();
+        for (TREX1__Membership__c mem : lstActivatedMems) {
+            if (mapTypesWithPromos.containsKey(mem.TREX1__memb_Type__c)) {
+                lstMemsWithPromos.add(mem);
+            }
+        }
+
         // Create wrappers for each valid membership promo and membership
+        List<TRecManualAdjustmentWrapper> lstWrappers = new List<TRecManualAdjustmentWrapper>();
+        for (TREX1__Membership__c mem : lstMemsWithPromos) {
+            TREX1__Membership_Type__c mTypeWithPromos = mapTypesWithPromos.get(mem.TREX1__memb_Type__c);
+            for (Assigned_Membership_Promotion__c amp : mTypeWithPromos.Assigned_Membership_Promotions__r) {
+
+                // Issue Credits promotion
+                if (amp.Membership_Promotion__r.Type__c == PROMO_TYPE_ISSUE_CREDITS) {
+                    // The gl code to offset, set from GL Code on promo
+                    // If empty, use the revenue gl account from the membership type
+                    String glCode = amp.Membership_Promotion__r.GL_Account__c != null
+                        ? amp.Membership_Promotion__r.GL_Account__r.TREX1__GL_Account_Number__c
+                        : mTypeWithPromos.Revenue_GL_Account__r.TREX1__GL_Account_Number__c;
+                    lstWrappers.add( createAdjustmentWrapper(mem, amp, glCode) );
+                }
+
+            }
+        }
+
+        /*
         List<TRecManualAdjustmentWrapper> lstWrappers = new List<TRecManualAdjustmentWrapper>();
         for (TREX1__Membership__c mem : lstActivatedMems) {
             if (mapTypesWithPromos.containsKey(mem.TREX1__memb_Type__c)) {
@@ -51,6 +84,7 @@ public with sharing class TA_Mem_HandlePromotionAU implements TriggerAction.Afte
                 }
             }
         }
+        */
 
         // Call manual adjustment service to create credit adjustments for wrappers
         if (!lstWrappers.isEmpty()) {
@@ -81,19 +115,22 @@ public with sharing class TA_Mem_HandlePromotionAU implements TriggerAction.Afte
     }
 
     /**
-     * Filter to only newly activated memberships
-     *  - Status = 'Active'
+     * @description Filter to newly activated memberships for individual memberships
+     *  and for the primary membership in a group membership
+     * 
+     * Criteria:
+     *  - NewStatus = 'Active'
      *  - OldStatus IN ('Draft', 'Pending Active')
+     *  - Either an individual membership or the primary in a group membership
      */
     private List<TREX1__Membership__c> filterMemberships(
         List<TREX1__Membership__c> lstMemberships
     ) {
         List<TREX1__Membership__c> lstActivatedMems = new List<TREX1__Membership__c>();
         for (TREX1__Membership__c mem : lstMemberships) {
-            if (
-                mem.TREX1__Status__c == 'Active' && 
-                eligibleFormerStatuses.contains(oldMap.get(mem.Id).TREX1__Status__c)
-            ) {
+            Boolean isNewlyActivated = mem.TREX1__Status__c == 'Active' && eligibleFormerStatuses.contains(oldMap.get(mem.Id).TREX1__Status__c);
+            Boolean isPrimaryMembership = mem.TREX1__Group__c == null || mem.TREX1__Contact__c == mem.TREX1__Purchasing_Transaction__r.TREX1__Contact__c;
+            if (isNewlyActivated && isPrimaryMembership) {
                 lstActivatedMems.add(mem);
             }
         }

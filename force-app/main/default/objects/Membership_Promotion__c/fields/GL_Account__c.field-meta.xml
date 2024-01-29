@@ -2,9 +2,9 @@
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>GL_Account__c</fullName>
     <deleteConstraint>SetNull</deleteConstraint>
-    <description>The GL account associated with this promotion. For Issue Credits promotions, this is the GL account that will be debited as credits are issued.</description>
+    <description>For Issue Credits promotions, this is the GL account that will be debited as credits are issued. If blank, The GL Account will be set based on the Revenue GL Account of the membership type.</description>
     <externalId>false</externalId>
-    <inlineHelpText>The GL account associated with this promotion. For Issue Credits promotions, this is the GL account that will be debited as credits are issued.</inlineHelpText>
+    <inlineHelpText>For Issue Credits promotions, this is the GL account that will be debited as credits are issued. If blank, The GL Account will be set based on the Revenue GL Account of the membership type.</inlineHelpText>
     <label>GL Account</label>
     <referenceTo>TREX1__GL_Account__c</referenceTo>
     <relationshipLabel>Membership Promotions</relationshipLabel>

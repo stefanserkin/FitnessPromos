@@ -12,7 +12,11 @@ public with sharing class TRecManualAdjustmentWrapper {
     public String id {get; private set;}
 
     public TRecManualAdjustmentWrapper() {
-        this.id = UUID.randomUUID().toString();
+        // Starting in Spring 24, use the UUID class
+        // this.id = UUID.randomUUID().toString();
+        this.id = EncodingUtil.convertToHex(
+            Crypto.generateDigest('MD5', Blob.valueOf(DateTime.now().getTime().format()))
+        );
     }
 
     /*******************************************

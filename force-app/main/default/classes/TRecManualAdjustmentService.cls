@@ -211,6 +211,7 @@ public with sharing class TRecManualAdjustmentService {
             TREX1__Total_Reversed__c = 0.00,                                             // Total Reversed or Refunded
             TREX1__Has_Been_Summarized__c = false,                                       // Has Been Summarized
             TREX1__Legacy_Id__c = ae.TREX1__Legacy_Id__c,                                // Wrapper id
+            Manual_Adjustment_ID__c = wrap.id,                                           // Manual Adjustment id
             Membership_Promotion__c = wrap.membershipPromotionId != null                 // Membership promotion id
                 ? wrap.membershipPromotionId 
                 : null

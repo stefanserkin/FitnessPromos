@@ -1220,7 +1220,7 @@ public class TestDataFactory {
      * No DML - returns unsaved list of sObjects
      * @param Contact membership contact
      * @param Account household
-     * @param Id parent transaction id
+     * @param TREX1__Transaction__c parent transaction
      */
 
     public static TREX1__Membership__c createCompletedPunchPassMembership(
