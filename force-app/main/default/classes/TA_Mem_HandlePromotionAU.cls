@@ -48,10 +48,19 @@ public with sharing class TA_Mem_HandlePromotionAU implements TriggerAction.Afte
         List<TRecManualAdjustmentWrapper> lstWrappers = new List<TRecManualAdjustmentWrapper>();
         for (TREX1__Membership__c mem : lstMemsWithPromos) {
             TREX1__Membership_Type__c mTypeWithPromos = mapTypesWithPromos.get(mem.TREX1__memb_Type__c);
+
             for (Assigned_Membership_Promotion__c amp : mTypeWithPromos.Assigned_Membership_Promotions__r) {
 
                 // Issue Credits promotion
                 if (amp.Membership_Promotion__r.Type__c == PROMO_TYPE_ISSUE_CREDITS) {
+                    // Guard against issue credits promos without a defined gl code
+                    if (
+                        amp.Membership_Promotion__r.GL_Account__c == null && 
+                        mTypeWithPromos.Revenue_GL_Account__r.TREX1__GL_Account_Number__c == null
+                    ) {
+                        continue;
+                    }
+                    
                     // The gl code to offset, set from GL Code on promo
                     // If empty, use the revenue gl account from the membership type
                     String glCode = amp.Membership_Promotion__r.GL_Account__c != null
