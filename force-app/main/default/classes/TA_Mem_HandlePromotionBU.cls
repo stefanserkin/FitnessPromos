@@ -1,8 +1,11 @@
 /*****************************************************
+ * @description When a membership is newly activated, check for active promotions assigned to 
+ *  its membership type (based on the start date of the membership).
+ * 
  * Called by metadata trigger handler
  * Manage from sObject Trigger Settings mdt: Membership
 ******************************************************/
-public with sharing class TA_Mem_HandlePromotionAU implements TriggerAction.AfterUpdate {
+public with sharing class TA_Mem_HandlePromotionBU implements TriggerAction.BeforeUpdate {
 
     private static final String PROMO_TYPE_ISSUE_CREDITS = 'Issue Credits';
     private static final String ADJUSTMENT_TYPE_CREDIT = 'Credit';
@@ -18,12 +21,14 @@ public with sharing class TA_Mem_HandlePromotionAU implements TriggerAction.Afte
     private static Map<Id, TREX1__Membership__c> newMap;
     private static Map<Id, TREX1__Membership__c> oldMap;
 
-    public void afterUpdate(
+    public void beforeUpdate(
         List<TREX1__Membership__c> newList, 
         List<TREX1__Membership__c> oldList
     ) {
+        // Get old trigger map from old list
         oldMap = new Map<Id, TREX1__Membership__c>(oldList);
-        newMap = TA_Mem_QueriesAU.getInstance().mapMemberships;
+        // Get map of memberships in trigger from unified query
+        newMap = TA_Mem_QueriesBU.getInstance().mapMemberships;
 
         // Filter to memberships being activated
         List<TREX1__Membership__c> lstActivatedMems = filterMemberships(newMap.values());
@@ -45,6 +50,7 @@ public with sharing class TA_Mem_HandlePromotionAU implements TriggerAction.Afte
         }
 
         // Create wrappers for each valid membership promo and membership
+        /*
         List<TRecManualAdjustmentWrapper> lstWrappers = new List<TRecManualAdjustmentWrapper>();
         for (TREX1__Membership__c mem : lstMemsWithPromos) {
             TREX1__Membership_Type__c mTypeWithPromos = mapTypesWithPromos.get(mem.TREX1__memb_Type__c);
@@ -70,6 +76,7 @@ public with sharing class TA_Mem_HandlePromotionAU implements TriggerAction.Afte
                 }
 
             }
+            
         }
 
         // Call manual adjustment service to create credit adjustments for wrappers
@@ -78,8 +85,11 @@ public with sharing class TA_Mem_HandlePromotionAU implements TriggerAction.Afte
             service.description = ADJUSTMENT_DESCRIPTION;
             service.createAdjustments();
         }
-        
+*/
+
+
     }
+
 
     /**
      * Create a single adjustment wrapper

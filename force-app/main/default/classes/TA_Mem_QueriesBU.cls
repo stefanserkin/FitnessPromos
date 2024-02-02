@@ -1,17 +1,13 @@
-/*****************************************************
- * Used to unify queries across trigger actions
- ******************************************************/
-public with sharing class TA_Mem_QueriesAU {
+public with sharing class TA_Mem_QueriesBU {
+    private static TA_Mem_QueriesBU instance;
 
-    private static TA_Mem_QueriesAU instance;
+    private TA_Mem_QueriesBU() {}
 
-    private TA_Mem_QueriesAU() {}
-
-    public static TA_Mem_QueriesAU getInstance() {
-        if (TA_Mem_QueriesAU.instance == null) {
-            TA_Mem_QueriesAU.instance = new TA_Mem_QueriesAU();
+    public static TA_Mem_QueriesBU getInstance() {
+        if (TA_Mem_QueriesBU.instance == null) {
+            TA_Mem_QueriesBU.instance = new TA_Mem_QueriesBU();
         }
-        return TA_Mem_QueriesAU.instance;
+        return TA_Mem_QueriesBU.instance;
     }
 
     public Map<Id, TREX1__Membership__c> mapMemberships { get; private set; }
@@ -26,7 +22,7 @@ public with sharing class TA_Mem_QueriesAU {
             List<TREX1__Membership__c> newList,
             List<TREX1__Membership__c> oldList
         ) {
-            TA_Mem_QueriesAU.getInstance().mapMemberships = getMembershipMap(
+            TA_Mem_QueriesBU.getInstance().mapMemberships = getMembershipMap(
                 newList
             );
         }
@@ -50,6 +46,4 @@ public with sharing class TA_Mem_QueriesAU {
         }
 
     }
-
-
 }

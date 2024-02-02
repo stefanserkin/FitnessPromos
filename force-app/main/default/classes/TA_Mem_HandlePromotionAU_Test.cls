@@ -165,4 +165,33 @@ private class TA_Mem_HandlePromotionAU_Test {
         );
     }
 
+    @IsTest
+    static void testActivateIneligibleMembership() {
+        Contact ct = [SELECT Id, AccountId FROM Contact LIMIT 1];
+        TREX1__Membership_Type__c mType = [SELECT Id, TREX1__Category__c FROM TREX1__Membership_Type__c LIMIT 1];
+
+        // Create draft membership
+        TREX1__Membership__c mem = TestDataFactory.createDraftStandardMembership(ct, mType);
+        insert mem;
+
+        Test.startTest();
+        mem.Ineligible_for_Promotions__c = true;
+        mem.TREX1__Status__c = 'Active';
+        update mem;
+        Test.stopTest();
+
+        Membership_Promotion__c promo = [
+            SELECT Id, GL_Account__r.TREX1__GL_Account_Number__c, 
+                   (SELECT Id, TREX1__GL_Code__c
+                      FROM TRec_Journal_Entries__r)
+              FROM Membership_Promotion__c 
+             LIMIT 1
+        ];
+
+        Assert.isTrue(
+            promo.TRec_Journal_Entries__r.isEmpty(),
+            'Should not have generated any promotional credits for ineligible membership'
+        );
+    }
+
 }
