@@ -28,12 +28,13 @@ public with sharing class MembershipPromotionSelector {
     private static List<Membership_Promotion__c> queryForActivePromotions() {
         return [
             SELECT Id, 
-                   Name,
+                   Name, 
                    (SELECT Id, 
                            Membership_Type__c, 
                            Membership_Type__r.Revenue_GL_Account__r.TREX1__GL_Account_Number__c
                       FROM Assigned_Membership_Promotions__r),
                    (SELECT Id, 
+                           Membership_Promotion__c, 
                            RecordType.DeveloperName, 
                            Credit_Amount__c, 
                            Number_of_Guest_Passes__c, 

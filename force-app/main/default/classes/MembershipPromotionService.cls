@@ -27,6 +27,8 @@ public with sharing class MembershipPromotionService {
     }
 
     private void generatePromotionBenefits(TREX1__Membership__c membership) {
+        if (MembershipPromotionSelector.getActivePromotion(membership.TREX1__memb_Type__c) == null) return;
+        
         Membership_Promotion__c promo = MembershipPromotionSelector.getActivePromotion(membership.TREX1__memb_Type__c);
         for (Promotion_Benefit__c pb : promo.Promotion_Benefits__r) {
             String recordTypeName = pb.RecordType.DeveloperName;
