@@ -49,7 +49,7 @@ public with sharing class TRecManualAdjustmentService {
     /*******************************************
      * @description Create adjustments for wrappers passed to constructor
      *******************************************/
-    public void createAdjustments() {
+    public List<Id> createAdjustments() {
         // Create one transaction for each wrapper
         List<TREX1__Transaction__c> lstTransactions = new List<TREX1__Transaction__c>();
         for (TRecManualAdjustmentWrapper maw : mapWrappers.values()) {
@@ -92,6 +92,13 @@ public with sharing class TRecManualAdjustmentService {
             t.TREX1__Status__c = STATUS_FIRMED;
         }
         update lstTransactions;
+
+        // Return transaction ids
+        List<Id> lstTransactionIds = new List<Id>();
+        for (TREX1__Transaction__c t : lstTransactions) {
+            lstTransactionIds.add(t.Id);
+        }
+        return lstTransactionIds;
     }
 
 
