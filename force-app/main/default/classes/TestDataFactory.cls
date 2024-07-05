@@ -1,4 +1,4 @@
-@isTest
+@IsTest
 public class TestDataFactory {
     
     /***********************************
@@ -97,6 +97,8 @@ public class TestDataFactory {
     private static final String PUBLIC_GROUP_NAME = 'Test Group Test';
     private static final String GROUP_TYPE_REGULAR = 'Regular';
     // Guest Passes
+    private static final String GUEST_PASS_STATUS_ISSUED = 'Issued';
+    private static final String GUEST_PASS_STATUS_INVITED = 'Invited';
     private static final String GUEST_PASS_STATUS_VALID = 'Valid';
     private static final String GUEST_PASS_SOURCE_MEMBERSHIP = 'Membership';
     // Journal Entries (TREX1)
@@ -247,6 +249,39 @@ public class TestDataFactory {
             }
         }
         return lstSwipes;
+    }
+
+    /**
+     * Returns a JSON string with a specified number of events.
+     * @param Integer Number of events
+     * @return {String} JSON response
+     */
+
+    public static String generateBrivoEventsResponse(
+        Integer numberOfEvents
+    ) {
+        List<Map<String, Object>> events = new List<Map<String, Object>>();
+        
+        for (Integer i = 0; i < numberOfEvents; i++) {
+            Map<String, Object> event = new Map<String, Object>{
+                'uuid' => '049e1ca7-592a-4249-8f8c-ebcdc8e28594-' + i,
+                'securityAction' => new Map<String, Object>{ 'securityActionId' => 5064, 'action' => 'Administrator Pulse Output', 'exception' => false },
+                'actor' => new Map<String, Object>{ 'id' => 123 + i, 'name' => 'QA Admin ' + i },
+                'eventObject' => new Map<String, Object>{ 'id' => 408023598 + i, 'name' => 'Door ' + i, 'deviceType' => new Map<String, Object>{ 'id' => 1, 'name' => 'Door' } },
+                'site' => new Map<String, Object>{ 'id' => 7833522 + i, 'siteName' => 'Home base ' + i },
+                'occurred' => Datetime.now().addDays(-1).addMinutes(-i).format('yyyy-MM-dd\'T\'HH:mm:ss.SSS\'Z\''),
+                'processed' => Datetime.now().addDays(-1).addMinutes(-i).format('yyyy-MM-dd\'T\'HH:mm:ss.SSS\'Z\''),
+                'eventData' => new Map<String, Object>{ 'actorName' => 'QA Admin ' + i, 'objectName' => 'Door ' + i, 'objectGroupName' => 'Home base ' + i, 'actionAllowed' => false, 'objectTypeId' => 2, 'deviceTypeId' => 1 }
+            };
+            events.add(event);
+        }
+        
+        Map<String, Object> response = new Map<String, Object>{
+            'data' => events,
+            'pageSize' => numberOfEvents
+        };
+
+        return JSON.serialize(response);
     }
 
 
@@ -446,6 +481,10 @@ public class TestDataFactory {
         List<TREX1__Facility__c> lstFacilities,
         Integer numberOfBookings
     ) {
+        if (facilityBookingRTId == null) {
+            facilityBookingRTId = Schema.SObjectType.TREX1__Booking__c.getRecordTypeInfosByDeveloperName().get('Facility').getRecordTypeId();
+        }
+
         TREX1__Function__c function = new TREX1__Function__c(
             Name = FUNCTION_BASE_NAME
         );
@@ -463,23 +502,25 @@ public class TestDataFactory {
         insert lstBCOs;
 
         List<TREX1__Booking__c> lstBookings = new List<TREX1__Booking__c>();
-        for (Integer i = 0; i < numberOfBookings; i++) {
-            lstBookings.add(
-                new TREX1__Booking__c(
-                    RecordTypeId = facilityBookingRTId,
-                    TREX1__Type__c = ADMIN_BOOKING_TYPE,
-                    TREX1__Status__c = BOOKING_STATUS,
-                    TREX1__Start_Time__c = Datetime.newInstance(Date.today() + 1, Time.newInstance(i + 7, 0, 0, 0)),
-                    TREX1__End_Time__c = Datetime.newInstance(Date.today() + 1, Time.newInstance(i + 8, 0, 0, 0)),
-                    TREX1__Event_Name__c = BOOKING_EVENT_NAME,
-                    TREX1__Setup_Time_Required__c = BOOKING_SETUP_TIME_REQUIRED,
-                    TREX1__Tear_Down_Time_Required__c = BOOKING_TEAR_DOWN_TIME_REQUIRED,
-                    Booking_Rate_Calculation_Mode__c = CALCULATION_MODE_AUTOMATIC
-                )
-            );
+        for (TREX1__Facility__c facility : lstFacilities) {
+            for (Integer i = 0; i < numberOfBookings; i++) {
+                lstBookings.add(
+                    new TREX1__Booking__c(
+                        RecordTypeId = facilityBookingRTId,
+                        TREX1__Facility__c = facility.Id,
+                        TREX1__Type__c = ADMIN_BOOKING_TYPE,
+                        TREX1__Status__c = BOOKING_STATUS,
+                        TREX1__Start_Time__c = Datetime.newInstance(Date.today() + 1, Time.newInstance(i + 7, 0, 0, 0)),
+                        TREX1__End_Time__c = Datetime.newInstance(Date.today() + 1, Time.newInstance(i + 8, 0, 0, 0)),
+                        TREX1__Event_Name__c = BOOKING_EVENT_NAME,
+                        TREX1__Setup_Time_Required__c = BOOKING_SETUP_TIME_REQUIRED,
+                        TREX1__Tear_Down_Time_Required__c = BOOKING_TEAR_DOWN_TIME_REQUIRED,
+                        Booking_Rate_Calculation_Mode__c = CALCULATION_MODE_AUTOMATIC
+                    )
+                );
+            }
         }
         return lstBookings;
-
     }
 
     /**
@@ -751,6 +792,7 @@ public class TestDataFactory {
                         TREX1__End_Date__c = endDate, 
                         TREX1__Start_Time__c = '1:00 PM', 
                         TREX1__End_Time__c = '2:00 PM', 
+                        TREX1__Day_of_Week__c = 'Monday;Tuesday;Wednesday', 
                         TREX1__Setup_Time_Required__c = 0, 
                         TREX1__Tear_Down_Time_Required__c = 0, 
                         TREX1__Capacity__c = 100, 
@@ -1027,7 +1069,7 @@ public class TestDataFactory {
             for (Integer i = 0; i < numGuestPasses; i++) {
                 lstPasses.add(
                     new Guest_Pass__c(
-                        Status__c = GUEST_PASS_STATUS_VALID,
+                        Status__c = GUEST_PASS_STATUS_ISSUED,
                         Source__c = GUEST_PASS_SOURCE_MEMBERSHIP,
                         Host_Contact__c = ct.Id,
                         Host_Account__c = ct.AccountId
@@ -1185,12 +1227,33 @@ public class TestDataFactory {
         return lstLocations;
     }
 
+    /**
+     * Create locations available for guest pass scanning
+     * No DML - returns unsaved list of sObjects
+     * @param Integer Number of records to create
+     */
+
+     public static List<TREX1__Location__c> createGuestPassLocations(
+        Integer numberOfLocations
+    ) {
+        List<TREX1__Location__c> lstLocations = new List<TREX1__Location__c>();
+        for (Integer i = 0; i < numberOfLocations; i++) {
+            lstLocations.add( 
+                new TREX1__Location__c(
+                    Name = LOCATION_BASE_NAME + String.valueOf(i), 
+                    Available_in_Guest_Pass_Scanner__c = true
+                )
+            );
+        }
+        return lstLocations;
+    }
+
 
     /***********************************
      * Memberships (TREX1)
      ***********************************/
 
-    /**
+     /**
      * Create membership sObjects
      * No DML - returns unsaved list of sObjects
      * @param Contact membership contact with account id
@@ -1202,7 +1265,7 @@ public class TestDataFactory {
         TREX1__Membership_Type__c membershipType
     ) {
         if (membershipStandardRecTypeId == null) {
-            membershipStandardRecTypeId = getStandardMembershipPunchPassId();
+            membershipStandardRecTypeId = getStandardMembershipRecordTypeId();
         }
         return new TREX1__Membership__c(
             TREX1__Contact__c = contact.Id, 
@@ -1220,12 +1283,12 @@ public class TestDataFactory {
      * No DML - returns unsaved list of sObjects
      * @param Contact membership contact
      * @param Account household
-     * @param TREX1__Transaction__c parent transaction
+     * @param TREX1__Transaction__c parent transaction 
      */
 
     public static TREX1__Membership__c createCompletedPunchPassMembership(
-        Contact contact,
-        Account account,
+        Contact contact, 
+        Account account, 
         TREX1__Transaction__c trans
     ) {
         if (punchPassRecTypeId == null) {
@@ -1352,7 +1415,7 @@ public class TestDataFactory {
      * Get standard membership record type id
      */
 
-     private static Id getStandardMembershipPunchPassId() {
+     private static Id getStandardMembershipRecordTypeId() {
         if (membershipStandardRecTypeId == null) {
             membershipStandardRecTypeId = Schema.SObjectType.TREX1__Membership__c.getRecordTypeInfosByDeveloperName().get('Standard_Membership').getRecordTypeId();
         }
@@ -1431,6 +1494,72 @@ public class TestDataFactory {
         return lstMembershipCategories;
     }
 
+
+    /***********************************
+     * Membership Promotions
+     ***********************************/
+
+     /**
+     * Create membership promotion sObjects with child promo benefits and assigned membership types
+     * Commits and returns saved list of sObjects
+     * @param List<TREX1__Membership_Type__c> list of membership types to assign the promo to
+     * @param TREX1__GL_Account__c Expense account to assign promotion costs to
+     */
+
+    public static Membership_Promotion__c createPromoWithBenefits(
+        List<TREX1__Membership_Type__c> lstMemTypes,
+        TREX1__GL_Account__c expenseGLAccount
+    ) {
+        Membership_Promotion__c promo = new Membership_Promotion__c(
+            Name = 'Test promo',
+            Active__c = true,
+            Start_Date__c = Date.today().addDays(-1),
+            End_Date__c = Date.today().addDays(1)
+        );
+        insert promo;
+
+        List<Promotion_Benefit__c> lstPromoBenefits = new List<Promotion_Benefit__c>();
+        lstPromoBenefits.add(
+            new Promotion_Benefit__c(
+                Membership_Promotion__c = promo.Id,
+                RecordTypeId = Schema.SObjectType.Promotion_Benefit__c.getRecordTypeInfosByDeveloperName().get('Account_Credit').getRecordTypeId(),
+                Credit_Amount__c = 100.00,
+                Void_if_Cancelled__c = true,
+                Expense_GL_Account__c = expenseGLAccount.Id
+            )
+        );
+        lstPromoBenefits.add(
+            new Promotion_Benefit__c(
+                Membership_Promotion__c = promo.Id,
+                RecordTypeId = Schema.SObjectType.Promotion_Benefit__c.getRecordTypeInfosByDeveloperName().get('Guest_Passes').getRecordTypeId(),
+                Number_of_Guest_Passes__c = 2,
+                Void_if_Cancelled__c = true
+            )
+        );
+        lstPromoBenefits.add(
+            new Promotion_Benefit__c(
+                Membership_Promotion__c = promo.Id,
+                RecordTypeId = Schema.SObjectType.Promotion_Benefit__c.getRecordTypeInfosByDeveloperName().get('Initiation_Fee_Discount').getRecordTypeId(),
+                Discount_Type__c = 'Amount',
+                Discount_Amount__c = 5.00
+            )
+        );
+        insert lstPromoBenefits;
+
+        List<Assigned_Membership_Promotion__c> lstAssignments = new List<Assigned_Membership_Promotion__c>();
+        for (TREX1__Membership_Type__c memType : lstMemTypes) {
+            lstAssignments.add(
+                new Assigned_Membership_Promotion__c(
+                    Membership_Promotion__c = promo.Id,
+                    Membership_Type__c = memType.Id
+                )
+            );
+        }
+        insert lstAssignments;
+
+        return promo;
+    }
+
     /***********************************
      * Membership Types (TREX1)
      ***********************************/
@@ -1475,7 +1604,7 @@ public class TestDataFactory {
         }
         return lstMembershipTypes;
     }
-
+    
     /**
      * Create membership type sObjects
      * No DML - returns unsaved list of sObjects
@@ -1733,8 +1862,8 @@ public class TestDataFactory {
         for (TREX1__Registration__c r : lstRegistrations) {
             TREX1__Course_Option_Enrollment__c coe = new TREX1__Course_Option_Enrollment__c();
             coe.TREX1__Contact__c = r.TREX1__Contact__c;
-            coe.TREX1__Registration__c = r.Id;
-            coe.TREX1__Course_Option__c = mapCourseSessionToCourseOptionId.get(r.TREX1__reg_Course_Session__c);
+            coe.TREX1__coe_Registration__c = r.Id;
+            coe.TREX1__coe_Course_Option__c = mapCourseSessionToCourseOptionId.get(r.TREX1__reg_Course_Session__c);
             coe.TREX1__Start_Date__c = r.TREX1__Start_Date__c;
             if (coe.TREX1__Start_Date__c > Date.today()) {
                 coe.TREX1__Status__c = REGISTRATION_STATUS_PENDING_ACTIVE;

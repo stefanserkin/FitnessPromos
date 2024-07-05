@@ -58,7 +58,7 @@ public with sharing class MembershipPromotionService {
         wrap.contactId = membership.TREX1__Contact__c;
         wrap.amount = promotionBenefit.Credit_Amount__c;
         wrap.type = ADJUSTMENT_TYPE_CREDIT;
-        wrap.glCode = promotionBenefit.Expense_GL_Account__c ?? membership.TREX1__memb_Type__r.Revenue_GL_Account__c;
+        wrap.glCode = promotionBenefit.Expense_GL_Account__r.TREX1__GL_Account_Number__c ?? membership.TREX1__memb_Type__r.Revenue_GL_Account__r.TREX1__GL_Account_Number__c;
         wrap.sourceMembershipId = membership.Id;
         wrap.membershipPromotionId = promotionBenefit.Membership_Promotion__c;
         return wrap;

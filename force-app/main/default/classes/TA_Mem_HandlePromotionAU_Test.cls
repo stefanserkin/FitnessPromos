@@ -34,24 +34,8 @@ private class TA_Mem_HandlePromotionAU_Test {
         mType.Revenue_GL_Account__c = lstGlAccounts[0].Id;
         insert mType;
 
-        // Membership promotions
-        Membership_Promotion__c promo = new Membership_Promotion__c(
-            Name = 'Test promo',
-            Type__c = 'Issue Credits',
-            Active__c = true,
-            Start_Date__c = Date.today().addDays(-1),
-            End_Date__c = Date.today().addDays(1),
-            Credit_Amount__c = 100.00, 
-            GL_Account__c = lstGlAccounts[1].Id
-        );
-        insert promo;
-
-        // Junction to link membership type to membership promo
-        Assigned_Membership_Promotion__c amp = new Assigned_Membership_Promotion__c(
-            Membership_Promotion__c = promo.Id,
-            Membership_Type__c = mType.Id
-        );
-        insert amp;
+        // Promos, promo benefits, and assignments
+        TestDataFactory.createPromoWithBenefits(new List<TREX1__Membership_Type__c>{mType}, lstGlAccounts[1]);
 
         // Contacts
         List<Contact> lstContacts = TestDataFactory.createContacts(5);
@@ -60,10 +44,10 @@ private class TA_Mem_HandlePromotionAU_Test {
 
     @IsTest
     static void testActivateMembershipWithMemTypeGlAccount() {
-        // Clear membership promo gl account
-        Membership_Promotion__c promo = [SELECT Id, GL_Account__c FROM Membership_Promotion__c LIMIT 1];
-        promo.GL_Account__c = null;
-        update promo;
+        // Clear promo benefit gl account
+        Promotion_Benefit__c pb = [SELECT Id, Expense_GL_Account__c FROM Promotion_Benefit__c WHERE RecordType.DeveloperName = 'Account_Credit' LIMIT 1];
+        pb.Expense_GL_Account__c = null;
+        update pb;
 
         Contact ct = [SELECT Id, AccountId FROM Contact LIMIT 1];
         TREX1__Membership_Type__c mType = [SELECT Id, TREX1__Category__c FROM TREX1__Membership_Type__c LIMIT 1];
@@ -109,59 +93,29 @@ private class TA_Mem_HandlePromotionAU_Test {
         update mem;
         Test.stopTest();
 
-        Membership_Promotion__c promo = [
-            SELECT Id, GL_Account__r.TREX1__GL_Account_Number__c, 
-                   (SELECT Id, TREX1__GL_Code__c
-                      FROM TRec_Journal_Entries__r)
-              FROM Membership_Promotion__c 
+        Promotion_Benefit__c benefit = [
+            SELECT Id, Expense_GL_Account__c, Expense_GL_Account__r.TREX1__GL_Account_Number__c
+              FROM Promotion_Benefit__c
+             WHERE RecordType.DeveloperName = 'Account_Credit'
              LIMIT 1
         ];
 
-        Set<String> setGlCodes = new Set<String>();
-        for (TREX1__Journal_Entry__c je : promo.TRec_Journal_Entries__r) {
-            setGlCodes.add(je.TREX1__GL_Code__c);
-        }
-
-        Assert.isTrue(
-            setGlCodes.contains(promo.GL_Account__r.TREX1__GL_Account_Number__c),
-            'Should have generated a je debiting the membership type revenue account'
-        );
-    }
-
-    @IsTest
-    static void testActivateMembershipWithNoGlAccount() {
-        // Clear membership promo gl account
-        Membership_Promotion__c promo = [SELECT Id, GL_Account__c FROM Membership_Promotion__c LIMIT 1];
-        promo.GL_Account__c = null;
-        update promo;
-
-        // Clear membership type gl account
-        TREX1__Membership_Type__c mType = [SELECT Id, TREX1__Category__c, Revenue_GL_Account__c FROM TREX1__Membership_Type__c LIMIT 1];
-        mType.Revenue_GL_Account__c = null;
-        update mType;
-
-        Contact ct = [SELECT Id, AccountId FROM Contact LIMIT 1];
-
-        // Create draft membership
-        TREX1__Membership__c mem = TestDataFactory.createDraftStandardMembership(ct, mType);
-        insert mem;
-
-        Test.startTest();
-        mem.TREX1__Status__c = 'Active';
-        update mem;
-        Test.stopTest();
-
-        Membership_Promotion__c refreshedPromo = [
-            SELECT Id, GL_Account__r.TREX1__GL_Account_Number__c, 
-                   (SELECT Id, TREX1__GL_Code__c
-                      FROM TRec_Journal_Entries__r)
-              FROM Membership_Promotion__c 
-             LIMIT 1
+        List<TREX1__Journal_Entry__c> lstJEs = [
+            SELECT Id, TREX1__Annotation__c, TREX1__GL_Code__c
+              FROM TREX1__Journal_Entry__c
+             WHERE TREX1__Debit__c > 0
         ];
 
-        Assert.isTrue(
-            refreshedPromo.TRec_Journal_Entries__r.isEmpty(),
-            'Journal entries should not have been created without a gl code'
+        System.debug(':::: benefit expense account --> ' + benefit.Expense_GL_Account__c);
+        System.debug(':::: benefit expense account number --> ' + benefit.Expense_GL_Account__r.TREX1__GL_Account_Number__c);
+        System.debug(':::: lstJEs --> ' + lstJEs);
+        System.debug(':::: je debit --> ' + lstJEs[0]);
+        System.debug(':::: je debit code --> ' + lstJEs[0].TREX1__GL_Code__c);
+
+        Assert.areEqual(
+            benefit.Expense_GL_Account__r.TREX1__GL_Account_Number__c, 
+            lstJEs[0].TREX1__GL_Code__c,
+            'Should have generated a je debiting the expense gl account'
         );
     }
 

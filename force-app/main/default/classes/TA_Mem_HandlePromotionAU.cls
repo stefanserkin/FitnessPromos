@@ -23,9 +23,8 @@ public without sharing class TA_Mem_HandlePromotionAU implements TriggerAction.A
         List<TREX1__Membership__c> oldList
     ) {
         oldMap = new Map<Id, TREX1__Membership__c>(oldList);
-        newMap = TA_Mem_QueriesAU.getInstance().mapMemberships;
 
-        Set<Id> setEligibleMembershipIds = getEligibleNewlyActivatedMembershipIds(newMap.values());
+        Set<Id> setEligibleMembershipIds = getEligibleNewlyActivatedMembershipIds(newList);
         if (!setEligibleMembershipIds.isEmpty()) {
             MembershipPromotionService serv = new MembershipPromotionService(setEligibleMembershipIds);
             serv.handlePromotions();

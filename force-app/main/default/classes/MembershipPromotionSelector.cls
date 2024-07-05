@@ -40,6 +40,7 @@ public with sharing class MembershipPromotionSelector {
                            Number_of_Guest_Passes__c, 
                            Void_if_Cancelled__c, 
                            Expense_GL_Account__c,
+                           Expense_GL_Account__r.TREX1__GL_Account_Number__c,
                            Discount_Type__c,
                            Discount_Amount__c,
                            Discount_Percentage__c
