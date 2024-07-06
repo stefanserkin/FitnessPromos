@@ -22,11 +22,13 @@ public without sharing class TA_Mem_HandlePromotionAU implements TriggerAction.A
         List<TREX1__Membership__c> newList, 
         List<TREX1__Membership__c> oldList
     ) {
+        System.debug('::::: entered handle promo after update');
         oldMap = new Map<Id, TREX1__Membership__c>(oldList);
 
-        Set<Id> setEligibleMembershipIds = getEligibleNewlyActivatedMembershipIds(newList);
-        if (!setEligibleMembershipIds.isEmpty()) {
-            MembershipPromotionService serv = new MembershipPromotionService(setEligibleMembershipIds);
+        Set<Id> eligibleMembershipIds = getEligibleNewlyActivatedMembershipIds(newList);
+        System.debug('::::: eligible membership ids --> ' + eligibleMembershipIds);
+        if (!eligibleMembershipIds.isEmpty()) {
+            MembershipPromotionService serv = new MembershipPromotionService(eligibleMembershipIds);
             serv.handlePromotions();
         }
     }
@@ -36,16 +38,26 @@ public without sharing class TA_Mem_HandlePromotionAU implements TriggerAction.A
     ) {
         Set<Id> membershipIds = new Set<Id>();
         for (TREX1__Membership__c mem : lstMemberships) {
-            // Override checkbox on the membership removes records from evaluation
-            if (mem.Ineligible_for_Promotions__c) continue;
-
-            Boolean isNewlyActivated = mem.TREX1__Status__c == 'Active' && eligibleFormerStatuses.contains(oldMap.get(mem.Id).TREX1__Status__c);
-            Boolean isPrimaryMembership = mem.TREX1__Group__c == null || mem.TREX1__Contact__c == mem.TREX1__Purchasing_Transaction__r.TREX1__Contact__c;
-            if (isNewlyActivated && isPrimaryMembership) {
+            if (isEligibleForPromotion(mem)) {
                 membershipIds.add(mem.Id);
             }
         }
         return membershipIds;
+    }
+
+    private Boolean isEligibleForPromotion(TREX1__Membership__c mem) {
+        Boolean isEligible = false;
+        Boolean isNewlyActivated = mem.TREX1__Status__c == 'Active' && eligibleFormerStatuses.contains(oldMap.get(mem.Id).TREX1__Status__c);
+        if (
+            mem.Membership_Promotion__c != null && 
+            isNewlyActivated &&
+            !mem.Ineligible_for_Promotions__c 
+        ) {
+            isEligible = true;
+        }
+        System.debug('::::::: mem --> ' + mem);
+        System.debug('::::::: is eligible --> ' + isEligible);
+        return isEligible;
     }
     
 }

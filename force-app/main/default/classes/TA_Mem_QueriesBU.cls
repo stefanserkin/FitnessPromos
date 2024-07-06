@@ -17,14 +17,12 @@ public with sharing class TA_Mem_QueriesBU {
      * Manage from sObject Trigger Settings mdt: Membership
      ******************************************************/
 
-    public class Service implements TriggerAction.AfterUpdate {
-        public void afterUpdate(
+    public class Service implements TriggerAction.BeforeUpdate {
+        public void beforeUpdate(
             List<TREX1__Membership__c> newList,
             List<TREX1__Membership__c> oldList
         ) {
-            TA_Mem_QueriesBU.getInstance().mapMemberships = getMembershipMap(
-                newList
-            );
+            TA_Mem_QueriesBU.getInstance().mapMemberships = getMembershipMap(newList);
         }
 
         private Map<Id, TREX1__Membership__c> getMembershipMap(

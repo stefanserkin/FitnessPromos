@@ -18,6 +18,13 @@ public with sharing class MembershipPromotionService {
     public MembershipPromotionService(Set<Id> membershipIds) {
         this.membershipIds = membershipIds;
     }
+
+    public Map<Id, TREX1__Membership__c> getMembershipMap() {
+        if (this.membershipMap == null) {
+            this.membershipMap = queryForMembershipMap();
+        }
+        return this.membershipMap;
+    }
     
     public void handlePromotions() {
         for (TREX1__Membership__c mem : getMembershipMap().values()) {
@@ -85,25 +92,22 @@ public with sharing class MembershipPromotionService {
         }
     }
 
-    private Map<Id, TREX1__Membership__c> getMembershipMap() {
-        if (this.membershipMap == null) {
-            this.membershipMap = new Map<Id, TREX1__Membership__c>([
-                SELECT Id, 
-                       Ineligible_for_Promotions__c, 
-                       TREX1__Status__c, 
-                       TREX1__Group__c, 
-                       Location_ID__c, 
-                       TREX1__memb_Type__c, 
-                       TREX1__memb_Type__r.Revenue_GL_Account__c, 
-                       TREX1__memb_Type__r.Revenue_GL_Account__r.TREX1__GL_Account_Number__c, 
-                       TREX1__Account__c, 
-                       TREX1__Contact__c, 
-                       TREX1__Purchasing_Transaction__r.TREX1__Contact__c
-                  FROM TREX1__Membership__c
-                 WHERE Id IN :this.membershipIds
-            ]);
-        }
-        return this.membershipMap;
+    private Map<Id, TREX1__Membership__c> queryForMembershipMap() {
+        return new Map<Id, TREX1__Membership__c>([
+            SELECT Id, 
+                   Ineligible_for_Promotions__c, 
+                   TREX1__Status__c, 
+                   TREX1__Group__c, 
+                   Location_ID__c, 
+                   TREX1__memb_Type__c, 
+                   TREX1__memb_Type__r.Revenue_GL_Account__c, 
+                   TREX1__memb_Type__r.Revenue_GL_Account__r.TREX1__GL_Account_Number__c, 
+                   TREX1__Account__c, 
+                   TREX1__Contact__c, 
+                   TREX1__Purchasing_Transaction__r.TREX1__Contact__c
+              FROM TREX1__Membership__c
+             WHERE Id IN :this.membershipIds
+        ]);
     }
 
 }
