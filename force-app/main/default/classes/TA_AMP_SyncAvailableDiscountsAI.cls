@@ -83,7 +83,8 @@ public with sharing class TA_AMP_SyncAvailableDiscountsAI implements TriggerActi
             SELECT Id, Name, Start_Date__c, End_Date__c,
                    (SELECT Id, Discount_Product__c
                       FROM Promotion_Benefits__r
-                     WHERE RecordType.DeveloperName = :RT_NAME_INITIATION_FEE_DISCOUNT),
+                     WHERE RecordType.DeveloperName = :RT_NAME_INITIATION_FEE_DISCOUNT
+                       AND Discount_Product__c != null),
                    (SELECT Id, Membership_Type__c, Membership_Promotion__c, Membership_Type__r.Name
                       FROM Assigned_Membership_Promotions__r
                      WHERE Id IN :this.newList)
@@ -93,7 +94,8 @@ public with sharing class TA_AMP_SyncAvailableDiscountsAI implements TriggerActi
                            WHERE Id IN :this.newList)
                AND Id IN (SELECT Membership_Promotion__c
                             FROM Promotion_Benefit__c
-                           WHERE RecordType.DeveloperName = :RT_NAME_INITIATION_FEE_DISCOUNT)
+                           WHERE RecordType.DeveloperName = :RT_NAME_INITIATION_FEE_DISCOUNT
+                             AND Discount_Product__c != null)
               WITH USER_MODE
         ]);
     }

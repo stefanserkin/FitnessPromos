@@ -24,6 +24,7 @@ public class TestDataFactory {
     private static String glCodeAccountsReceivable;
     private static Map<String, Id> mapProcessorProfileNameToId;
     private static Integer caseCount = 0;
+    private static Integer glCodeIncrementer = 0;
     
     /***********************************
      * Constants
@@ -962,12 +963,13 @@ public class TestDataFactory {
         for (Integer i = 0; i < numberOfAccounts; i++) {
             lstGlAccounts.add(
                 new TREX1__GL_Account__c(
-                    Name = GL_ACCOUNT_BASE_NAME + String.valueOf(i),
+                    Name = GL_ACCOUNT_BASE_NAME + String.valueOf(glCodeIncrementer),
                     TREX1__Active__c = true,
-                    TREX1__GL_Account_Number__c = GL_ACCOUNT_BASE_CODE + String.valueOf(i),
+                    TREX1__GL_Account_Number__c = GL_ACCOUNT_BASE_CODE + String.valueOf(glCodeIncrementer),
                     TREX1__Type__c = GL_ACCOUNT_TYPE_INCOME
                 )
             );
+            glCodeIncrementer++;
         }
         return lstGlAccounts;
     }
@@ -1510,12 +1512,7 @@ public class TestDataFactory {
         List<TREX1__Membership_Type__c> lstMemTypes,
         TREX1__GL_Account__c expenseGLAccount
     ) {
-        Membership_Promotion__c promo = new Membership_Promotion__c(
-            Name = 'Test promo',
-            Active__c = true,
-            Start_Date__c = Date.today().addDays(-1),
-            End_Date__c = Date.today().addDays(1)
-        );
+        Membership_Promotion__c promo = createActiveMembershipPromo();
         insert promo;
 
         List<Promotion_Benefit__c> lstPromoBenefits = new List<Promotion_Benefit__c>();
@@ -1540,8 +1537,10 @@ public class TestDataFactory {
             new Promotion_Benefit__c(
                 Membership_Promotion__c = promo.Id,
                 RecordTypeId = Schema.SObjectType.Promotion_Benefit__c.getRecordTypeInfosByDeveloperName().get('Initiation_Fee_Discount').getRecordTypeId(),
-                Discount_Type__c = 'Amount',
-                Discount_Amount__c = 5.00
+                Discount_Type__c = 'Percentage',
+                Discount_Percentage__c = 100.00,
+                Expense_GL_Account__c = expenseGLAccount.Id,
+                Discount_Product__c = createPercentageDiscountProduct().Id
             )
         );
         insert lstPromoBenefits;
@@ -1558,6 +1557,36 @@ public class TestDataFactory {
         insert lstAssignments;
 
         return promo;
+    }
+
+    public static Membership_Promotion__c createActiveMembershipPromo() {
+        Membership_Promotion__c promo = new Membership_Promotion__c(
+            Name = 'Test promo',
+            Active__c = true,
+            Start_Date__c = Date.today().addDays(-1),
+            End_Date__c = Date.today().addDays(1)
+        );
+        return promo;
+    }
+
+    public static TREX1__Product__c createPercentageDiscountProduct() {
+        TREX1__Product__c prod = new TREX1__Product__c();
+        prod.RecordTypeId = Schema.SObjectType.TREX1__Product__c.getRecordTypeInfosByDeveloperName().get('Discount').getRecordTypeId();
+        prod.Name = 'Test Discount Product';
+        prod.TREX1__Global_Billing_Group__c = getGlobalBillingGroupId();
+        prod.TREX1__Allow_Multiple__c = true;
+        prod.TREX1__Billing_Cancellation_Credit_Setting__c = 'No Credit';
+        prod.TREX1__Discount_End_Date_Setting__c = 'Earlier of Billing End Date and Product End Date';
+        insert prod;
+
+        TREX1__Price_Level__c pl = new TREX1__Price_Level__c();
+        pl.RecordTypeId = Schema.SObjectType.TREX1__Price_Level__c.getRecordTypeInfosByDeveloperName().get('Percentage').getRecordTypeId();
+        pl.TREX1__Product__c = prod.Id;
+        pl.Name = 'Test Discount Price Level';
+        pl.TREX1__Percentage__c = 100;
+        insert pl;
+
+        return prod;
     }
 
     /***********************************

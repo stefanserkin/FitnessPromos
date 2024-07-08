@@ -160,5 +160,39 @@ private class GuestPassService_Test {
 
         Assert.areEqual(ld.Id, passToVerify.Lead__c, 'Should have linked the guest pass to the guest lead');
     }
+
+    @IsTest
+    static void testCreateGuestPassFromMembership() {
+        Integer numberOfGuestPasses = 4;
+
+        TREX1__Membership__c mem = getStandardMembership();
+        Test.startTest();
+        List<Guest_Pass__c> guestPasses = GuestPassService.createGuestPassesForMembership(mem, numberOfGuestPasses);
+        Test.stopTest();
+
+        Assert.areEqual(numberOfGuestPasses, guestPasses.size(), 'Should have created ' + numberOfGuestPasses + ' guest passes');
+
+        for (Guest_Pass__c gp : guestPasses) {
+            Assert.areEqual(mem.TREX1__Contact__c, gp.Host_Contact__c, 'Should have linked the guest pass to the correct contact');
+            Assert.areEqual(mem.ID, gp.Host_Membership__c, 'Should have linked the guest pass to the correct membership');
+            Assert.areEqual(GuestPassService.STATUS_ISSUED, gp.Status__c, 'Should have created passes with a status of Issued');
+        }
+    }
+
+    private static TREX1__Membership__c getStandardMembership() {
+        Account acc = TestDataFactory.createHouseholdAccounts(1).get(0);
+        acc.Id = TestUtility.getFakeId(Account.SObjectType);
+        Contact ct = TestDataFactory.createContacts(new List<Account>{acc}, 1).get(0);
+        ct.Id = TestUtility.getFakeId(Contact.SObjectType);
+        TREX1__Membership_Category__c category = TestDataFactory.createStandardMembershipCategories(1).get(0);
+        category.Id = TestUtility.getFakeId(TREX1__Membership_Category__c.SObjectType);
+        TREX1__Location__c location = TestDataFactory.createLocations(1).get(0);
+        location.Id = TestUtility.getFakeId(TREX1__Location__c.SObjectType);
+        TREX1__Membership_Type__c memType = TestDataFactory.createStandardMembershipTypes(new List<TREX1__Membership_Category__c>{category}, location, 1).get(0);
+        memType.Id = TestUtility.getFakeId(TREX1__Membership_Type__c.SObjectType);
+        TREX1__Membership__c mem = TestDataFactory.createDraftStandardMembership(ct, memType);
+        mem.Id = TestUtility.getFakeId(TREX1__Membership__c.SObjectType);
+        return mem;
+    }
     
 }
