@@ -18,7 +18,7 @@ private class TA_Mem_SetTransactionContact_Test {
 
     @IsTest
     static void testSetTransactionContactBeforeInsert() {
-        TREX1__Membership_Type__c memType = [SELECT Id FROM TREX1__Membership_Type__c LIMIT 1];
+        TREX1__Membership_Type__c memType = [SELECT Id, TREX1__Category__c FROM TREX1__Membership_Type__c LIMIT 1];
         Contact ct = [SELECT Id, AccountId FROM Contact LIMIT 1];
         TREX1__Transaction__c trans = [SELECT Id, TREX1__Contact__c FROM TREX1__Transaction__c LIMIT 1];
 
@@ -58,7 +58,8 @@ private class TA_Mem_SetTransactionContact_Test {
         TREX1__Membership__c refreshedMem = [
             SELECT Id, Transaction_Contact__c 
               FROM TREX1__Membership__c 
-             WHERE Id = :mem.Id LIMIT 1
+             WHERE Id = :mem.Id 
+             LIMIT 1
         ];
 
         Assert.areEqual(
@@ -82,12 +83,41 @@ private class TA_Mem_SetTransactionContact_Test {
         TREX1__Membership__c refreshedMem = [
             SELECT Id, Transaction_Contact__c 
               FROM TREX1__Membership__c 
-             WHERE Id = :mem.Id LIMIT 1
+             WHERE Id = :mem.Id 
+             LIMIT 1
         ];
 
         Assert.isNull(
-            trans.TREX1__Contact__c, 
+            refreshedMem.Transaction_Contact__c, 
             'Should have successfully saved the membership without a transaction contact'
+        );
+    }
+    
+    @IsTest
+    static void testClearTransactionContactBeforeUpdate() {
+        TREX1__Membership_Type__c memType = [SELECT Id, TREX1__Category__c FROM TREX1__Membership_Type__c LIMIT 1];
+        Contact ct = [SELECT Id, AccountId FROM Contact LIMIT 1];
+        TREX1__Transaction__c trans = [SELECT Id, TREX1__Contact__c FROM TREX1__Transaction__c LIMIT 1];
+
+        TREX1__Membership__c mem = TestDataFactory.createDraftStandardMembership(ct, memType);
+        mem.TREX1__Purchasing_Transaction__c = trans.Id;
+        insert mem;
+
+        Test.startTest();
+        mem.TREX1__Purchasing_Transaction__c = null;
+        update mem;
+        Test.stopTest();
+
+        TREX1__Membership__c refreshedMem = [
+            SELECT Id, Transaction_Contact__c 
+              FROM TREX1__Membership__c 
+             WHERE Id = :mem.Id 
+             LIMIT 1
+        ];
+
+        Assert.isNull(
+            refreshedMem.Transaction_Contact__c, 
+            'Should have successfully cleared the transaction contact'
         );
     }
 

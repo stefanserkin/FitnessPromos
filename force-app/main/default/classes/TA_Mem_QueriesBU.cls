@@ -10,7 +10,7 @@ public with sharing class TA_Mem_QueriesBU {
         return TA_Mem_QueriesBU.instance;
     }
 
-    public Map<Id, TREX1__Membership__c> mapMemberships { get; private set; }
+    public Map<Id, TREX1__Transaction__c> mapTransactions { get; private set; }
 
     /*****************************************************
      * Called by metadata trigger handler
@@ -22,23 +22,22 @@ public with sharing class TA_Mem_QueriesBU {
             List<TREX1__Membership__c> newList,
             List<TREX1__Membership__c> oldList
         ) {
-            TA_Mem_QueriesBU.getInstance().mapMemberships = getMembershipMap(newList);
+            TA_Mem_QueriesBU.getInstance().mapTransactions = getTransactionMap(newList);
         }
-
-        private Map<Id, TREX1__Membership__c> getMembershipMap(
+        
+        private Map<Id, TREX1__Transaction__c> getTransactionMap(
             List<TREX1__Membership__c> newList
         ) {
-            Map<Id, TREX1__Membership__c> mapResult = new Map<Id, TREX1__Membership__c>([
-                SELECT Id, 
-                       Ineligible_for_Promotions__c, 
-                       TREX1__Status__c, 
-                       TREX1__Group__c, 
-                       TREX1__memb_Type__c, 
-                       TREX1__Account__c, 
-                       TREX1__Contact__c, 
-                       TREX1__Purchasing_Transaction__r.TREX1__Contact__c
-                  FROM TREX1__Membership__c
-                 WHERE Id IN :newList
+            Set<Id> transactionIds = new Set<Id>();
+            for (TREX1__Membership__c mem : newList) {
+                if (mem.TREX1__Purchasing_Transaction__c != null) {
+                    transactionIds.add(mem.TREX1__Purchasing_Transaction__c);
+                }
+            }
+            Map<Id, TREX1__Transaction__c> mapResult = new Map<Id, TREX1__Transaction__c>([
+				SELECT Id, TREX1__Contact__c
+                  FROM TREX1__Transaction__c
+				 WHERE Id IN :transactionIds                
             ]);
             return mapResult;
         }
