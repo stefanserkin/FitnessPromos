@@ -106,12 +106,6 @@ private class TA_Mem_HandlePromotionAU_Test {
              WHERE TREX1__Debit__c > 0
         ];
 
-        System.debug(':::: benefit expense account --> ' + benefit.Expense_GL_Account__c);
-        System.debug(':::: benefit expense account number --> ' + benefit.Expense_GL_Account__r.TREX1__GL_Account_Number__c);
-        System.debug(':::: lstJEs --> ' + lstJEs);
-        System.debug(':::: je debit --> ' + lstJEs[0]);
-        System.debug(':::: je debit code --> ' + lstJEs[0].TREX1__GL_Code__c);
-
         Assert.areEqual(
             benefit.Expense_GL_Account__r.TREX1__GL_Account_Number__c, 
             lstJEs[0].TREX1__GL_Code__c,

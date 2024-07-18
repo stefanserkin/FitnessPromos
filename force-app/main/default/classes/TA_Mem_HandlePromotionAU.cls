@@ -22,11 +22,9 @@ public without sharing class TA_Mem_HandlePromotionAU implements TriggerAction.A
         List<TREX1__Membership__c> newList, 
         List<TREX1__Membership__c> oldList
     ) {
-        System.debug('::::: entered handle promo after update');
         oldMap = new Map<Id, TREX1__Membership__c>(oldList);
 
         Set<Id> eligibleMembershipIds = getEligibleNewlyActivatedMembershipIds(newList);
-        System.debug('::::: eligible membership ids --> ' + eligibleMembershipIds);
         if (!eligibleMembershipIds.isEmpty()) {
             MembershipPromotionService serv = new MembershipPromotionService(eligibleMembershipIds);
             serv.handlePromotions();
@@ -55,8 +53,6 @@ public without sharing class TA_Mem_HandlePromotionAU implements TriggerAction.A
         ) {
             isEligible = true;
         }
-        System.debug('::::::: mem --> ' + mem);
-        System.debug('::::::: is eligible --> ' + isEligible);
         return isEligible;
     }
     

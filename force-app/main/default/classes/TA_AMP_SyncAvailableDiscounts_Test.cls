@@ -33,7 +33,6 @@ private class TA_AMP_SyncAvailableDiscounts_Test {
              LIMIT 1
         ];
         Id productId = promo.Promotion_Benefits__r[0].Discount_Product__c;
-        System.debug('::::: product id --> ' + productId);
 
         List<TREX1__Membership_Type__c> memTypes = [SELECT Id FROM TREX1__Membership_Type__c];
 
