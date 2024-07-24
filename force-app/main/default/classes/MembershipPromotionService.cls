@@ -34,7 +34,9 @@ public with sharing class MembershipPromotionService {
     }
 
     private void generatePromotionBenefits(TREX1__Membership__c membership) {
-        if (MembershipPromotionSelector.getActivePromotion(membership.TREX1__memb_Type__c) == null) return;
+        if (MembershipPromotionSelector.getActivePromotion(membership.TREX1__memb_Type__c) == null) {
+            return;
+        }
         
         Membership_Promotion__c promo = MembershipPromotionSelector.getActivePromotion(membership.TREX1__memb_Type__c);
         for (Promotion_Benefit__c pb : promo.Promotion_Benefits__r) {
@@ -43,12 +45,6 @@ public with sharing class MembershipPromotionService {
                 accountCreditWrappers.add( createAdjustmentWrapper(membership, pb) );
             } else if (recordTypeName == BENEFIT_TYPE_GUEST_PASSES) {
                 guestPassesToInsert.addAll( generateGuestPasses(membership, pb) );
-            } else if (recordTypeName == BENEFIT_TYPE_INITIATION_FEE) {
-                // Nothing happens here, since this is handled during the membership sale with an auto-discount
-            } else {
-                throw new MembershipPromotionServiceException(
-                    'Unknown Promotion Benefit Type: ' + pb.RecordType.DeveloperName + ' (' + pb.Id + ')'
-                );
             }
         }
     }
